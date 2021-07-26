@@ -5,12 +5,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-@EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
@@ -36,8 +34,25 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         //首页所有人可以访问，功能页有相应权限才能访问
         //链式编程
-        //请求授权的规则
-        super.configure(http);
+
+        // 自定义表单认证
+        http.formLogin()
+                //当发现/login 时认为是登录，需要执行 UserDetailsServiceImpl
+                .loginProcessingUrl("/login")
+                //此处是 post 请求,参数是登录成功后跳转地址
+                .successForwardUrl("/toMain")
+                //登陆界面
+                .loginPage("/login")
+                .and()
+                // url 拦截
+                .authorizeRequests()
+                //login.html 不需要被认证
+                .antMatchers("/login").permitAll()
+                //所有的请求都必须被认证。必须登录后才能访问。
+                .anyRequest().authenticated()
+                .and()
+                //关闭 csrf 防护
+                .csrf().disable();
     }
 
     /**
